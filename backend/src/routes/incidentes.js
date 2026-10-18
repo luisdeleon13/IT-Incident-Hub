@@ -96,4 +96,48 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// PUT /incidentes/:id/asignar -> asigna un tecnico y cambia el estado a ASIGNADO
+router.put('/:id/asignar', async (req, res) => {
+  const id = Number(req.params.id);
+  const { tecnico_id } = req.body || {};
+
+  // Validar el id del incidente y que venga el tecnico
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Id no valido' });
+  }
+  if (!tecnico_id) {
+    return res.status(400).json({ error: 'Falta el tecnico' });
+  }
+
+  try {
+    // 1. Comprobar que el usuario existe y que realmente es TECNICO
+    const tecnico = await pool.query(
+      'SELECT id FROM usuarios WHERE id = $1 AND rol = $2',
+      [tecnico_id, 'TECNICO']
+    );
+    if (tecnico.rows.length === 0) {
+      return res.status(400).json({ error: 'El tecnico no existe o no tiene rol TECNICO' });
+    }
+
+    // 2. Asignar y pasar a ASIGNADO. Solo se permite si el incidente esta en NUEVO o ASIGNADO.
+    const resultado = await pool.query(
+      `UPDATE incidentes
+       SET tecnico_id = $1, estado = 'ASIGNADO'
+       WHERE id = $2 AND estado IN ('NUEVO', 'ASIGNADO')
+       RETURNING *`,
+      [tecnico_id, id]
+    );
+
+    // Si no se actualizo nada: o no existe, o ya esta en proceso/cerrado
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Incidente no encontrado o ya no se puede reasignar' });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al asignar el tecnico' });
+  }
+});
+
 module.exports = router;
