@@ -42,4 +42,58 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET /incidentes -> devuelve la lista de incidentes (los mas recientes primero)
+router.get('/', async (req, res) => {
+  try {
+    // LEFT JOIN: trae tambien el nombre de quien reporta y del tecnico.
+    // Es LEFT para los incidentes que aun no tienen tecnico asignado.
+    const resultado = await pool.query(
+      `SELECT i.*,
+              u.nombre AS usuario_nombre,
+              t.nombre AS tecnico_nombre
+       FROM incidentes i
+       JOIN usuarios u ON u.id = i.usuario_id
+       LEFT JOIN usuarios t ON t.id = i.tecnico_id
+       ORDER BY i.fecha_creacion DESC`
+    );
+    res.json(resultado.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener los incidentes' });
+  }
+});
+
+// GET /incidentes/:id -> devuelve el detalle de un incidente
+router.get('/:id', async (req, res) => {
+  const id = Number(req.params.id);
+
+  // Validar que el id sea un numero entero valido
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Id no valido' });
+  }
+
+  try {
+    const resultado = await pool.query(
+      `SELECT i.*,
+              u.nombre AS usuario_nombre,
+              t.nombre AS tecnico_nombre
+       FROM incidentes i
+       JOIN usuarios u ON u.id = i.usuario_id
+       LEFT JOIN usuarios t ON t.id = i.tecnico_id
+       WHERE i.id = $1`,
+      [id]
+    );
+
+    // Si no hay filas, el incidente no existe
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: 'Incidente no encontrado' });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener el incidente' });
+  }
+});
+
 module.exports = router;
