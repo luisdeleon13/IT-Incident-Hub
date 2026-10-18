@@ -20,3 +20,22 @@ export async function crearIncidente(datos) {
   if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al crear');
   return cuerpo;
 }
+
+// Trae los usuarios con rol TECNICO
+export async function obtenerTecnicos() {
+  const respuesta = await fetch(`${API_URL}/usuarios?rol=TECNICO`);
+  if (!respuesta.ok) throw new Error('No se pudo cargar los tecnicos');
+  return respuesta.json();
+}
+
+// Asigna un tecnico a un incidente
+export async function asignarTecnico(incidenteId, tecnicoId) {
+  const respuesta = await fetch(`${API_URL}/incidentes/${incidenteId}/asignar`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tecnico_id: Number(tecnicoId) }),
+  });
+  const cuerpo = await respuesta.json();
+  if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al asignar');
+  return cuerpo;
+}

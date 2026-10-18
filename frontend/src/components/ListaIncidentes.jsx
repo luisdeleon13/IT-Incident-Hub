@@ -1,5 +1,6 @@
 // Muestra la tabla de incidentes que recibe desde App
-export default function ListaIncidentes({ incidentes }) {
+//export default function ListaIncidentes({ incidentes }) {
+export default function ListaIncidentes({ incidentes, alSeleccionar }) {
   if (incidentes.length === 0) {
     return <p>No hay incidentes registrados.</p>;
   }
@@ -20,7 +21,8 @@ export default function ListaIncidentes({ incidentes }) {
       </thead>
       <tbody>
         {incidentes.map((i) => (
-          <tr key={i.id}>
+          //<tr key={i.id}>
+          <tr key={i.id} onClick={() => alSeleccionar(i)} style={{ cursor: 'pointer' }}>
             <td>{i.id}</td>
             <td>{i.titulo}</td>
             <td>{i.categoria}</td>
