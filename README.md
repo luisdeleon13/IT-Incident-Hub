@@ -1,20 +1,75 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# IT Incident Hub
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+Sistema web para registrar, asignar y dar seguimiento a incidentes de TI. Reemplaza los reportes dispersos en llamadas, mensajería y correo por una solución trazable y preparada para entrega continua.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## Arquitectura
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+Frontend (React + Vite) → API REST (Node.js + Express) → Base de datos (PostgreSQL)
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+## Estructura del repositorio
+
+- `backend/` : API REST
+- `frontend/` : interfaz web
+- `database/` : scripts SQL
+- `tests/` : pruebas
+- `devops/` : scripts y configuración DevOps
+- `docs/` : documentación
+- `.github/workflows/` : workflows de GitHub Actions
+- `azure-pipelines.yml` : pipeline de Azure
+
+## Requisitos
+
+- Node.js 20 o superior (LTS)
+- PostgreSQL 14 o superior
+- Git
+
+## Instalación
+
+1. Clonar el repositorio:
+```
+   git clone https://dev.azure.com/ldeleons13/IT-Incident-Hub/_git/IT-Incident-Hub
+   cd IT-Incident-Hub
+```
+2. Crear la base de datos y cargar los scripts:
+```
+   psql -U postgres -c "CREATE DATABASE incident_hub;"
+   psql -U postgres -d incident_hub -f database/schema.sql
+   psql -U postgres -d incident_hub -f database/datos_iniciales.sql
+```
+3. Configurar el backend: copiar `backend/.env.example` como `backend/.env` y escribir la contraseña real de PostgreSQL en `DB_PASSWORD`. El archivo `.env` no se sube al repositorio.
+4. Instalar dependencias:
+```
+   cd backend && npm install
+   cd ../frontend && npm install
+```
+
+## Ejecución
+
+En dos terminales:
+
+```
+cd backend
+npm run dev
+```
+La API queda en `http://localhost:3000`.
+
+```
+cd frontend
+npm run dev
+```
+La web queda en la dirección que muestre Vite (normalmente `http://localhost:5173`).
+
+## Flujo de trabajo
+
+Work Item (Azure Boards) → rama `feature/*`, `fix/*`, `refactor/*` o `docs/*` → commit con `AB#ID` → Pull Request → revisión → `main`. Más detalle en `docs/`.
+
+## Entrega
+
+Por indicación del docente, el proyecto se entrega en un único repositorio, con entregas parciales marcadas mediante tags de versión.
+
+## Responsables
+
+| Integrante | Rol |
+|---|---|
+| Luis Reynaldo de León Sopón | Desarrollo y DevOps |
+| pendiente de revision de usuario | Revisión de Pull Requests |
