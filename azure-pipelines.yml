@@ -1,0 +1,30 @@
+# Pipeline de integracion continua - IT Incident Hub
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - fix/*
+      - docs/*
+
+pool:
+  name: Default
+
+steps:
+  # 1. Checkout del codigo
+  - checkout: self
+
+  
+  - script: npm ci
+    workingDirectory: backend
+    displayName: 'Instalar dependencias del backend'
+
+  # 3. Instalar dependencias del frontend
+  - script: npm ci
+    workingDirectory: frontend
+    displayName: 'Instalar dependencias del frontend'
+
+  # 4. Build del frontend
+  - script: npm run build
+    workingDirectory: frontend
+    displayName: 'Build del frontend'
