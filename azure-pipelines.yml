@@ -19,6 +19,11 @@ steps:
     workingDirectory: backend
     displayName: 'Instalar dependencias del backend'
 
+    # Revision de dependencias de produccion (falla con severidad alta o critica)
+  - script: npm audit --omit=dev --audit-level=high
+    workingDirectory: backend
+    displayName: 'Auditoria de dependencias del backend (produccion)'
+
     # Pruebas automaticas del backend (Jest)
   - script: npm test
     workingDirectory: backend
