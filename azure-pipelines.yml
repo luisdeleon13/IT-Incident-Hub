@@ -9,7 +9,8 @@ trigger:
 
 pool:
   name: Default
-
+variables:
+  - group: incident-hub-secretos
 steps:
   # 1. Checkout del codigo
   - checkout: self
@@ -38,3 +39,11 @@ steps:
   - script: npm run build
     workingDirectory: frontend
     displayName: 'Build del frontend'
+
+  # Demostracion de uso de un secreto protegido (Azure oculta su valor en los logs)
+  - powershell: |
+      if ($env:DB_PASSWORD) { Write-Host "DB_PASSWORD disponible (longitud: $($env:DB_PASSWORD.Length))" }
+      else { Write-Host "DB_PASSWORD no disponible"; exit 1 }
+    displayName: 'Verificar secreto protegido'
+    env:
+      DB_PASSWORD: $(DB_PASSWORD)
