@@ -19,6 +19,11 @@ steps:
     workingDirectory: backend
     displayName: 'Instalar dependencias del backend'
 
+    # Pruebas automaticas del backend (Jest)
+  - script: npm test
+    workingDirectory: backend
+    displayName: 'Pruebas del backend (Jest)'
+
   # 3. Instalar dependencias del frontend
   - script: npm ci
     workingDirectory: frontend
