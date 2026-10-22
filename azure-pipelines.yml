@@ -47,3 +47,27 @@ steps:
     displayName: 'Verificar secreto protegido'
     env:
       DB_PASSWORD: $(DB_PASSWORD)
+  # Preparar la carpeta del paquete: backend (sin node_modules ni .env) y frontend compilado
+  - powershell: |
+      New-Item -ItemType Directory -Force -Path "$(Build.ArtifactStagingDirectory)\paquete" | Out-Null
+      robocopy backend "$(Build.ArtifactStagingDirectory)\paquete\backend" /E /XD node_modules /XF .env | Out-Null
+      robocopy frontend\dist "$(Build.ArtifactStagingDirectory)\paquete\frontend" /E | Out-Null
+      robocopy database "$(Build.ArtifactStagingDirectory)\paquete\database" /E | Out-Null
+      if ($LASTEXITCODE -ge 8) { exit 1 } else { exit 0 }
+    displayName: 'Preparar paquete'
+
+  # Comprimir el paquete en un .zip
+  - task: ArchiveFiles@2
+    displayName: 'Comprimir paquete'
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\paquete'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)\incident-hub-$(Build.BuildNumber).zip'
+
+  # Publicar el .zip como artefacto
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publicar artefacto'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)\incident-hub-$(Build.BuildNumber).zip'
+      ArtifactName: 'incident-hub'
