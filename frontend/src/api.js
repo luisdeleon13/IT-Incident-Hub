@@ -1,5 +1,5 @@
-// Direccion de la API del backend
-const API_URL = 'http://localhost:3000';
+// La URL sale de la variable de entorno de Vite; si no existe, usa localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Trae la lista de incidentes
 export async function obtenerIncidentes() {
