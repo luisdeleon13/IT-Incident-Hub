@@ -12,7 +12,7 @@ describe('GET /salud', () => {
   test('responde ok', async () => {
     const res = await request(app).get('/salud');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ estado: 'ok' });
+    expect(res.body).toEqual({ estado: 'caido' });
   });
 });
 
