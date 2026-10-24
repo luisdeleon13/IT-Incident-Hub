@@ -72,4 +72,4 @@ Por indicación del docente, el proyecto se entrega en un único repositorio, co
 | Integrante | Rol |
 |---|---|
 | Luis Reynaldo de León Sopón | Desarrollo y DevOps |
-| pendiente de revision de usuario | Revisión de Pull Requests |
+| Jaqueline Fabiola Rodas Ramirez | Revisión de Pull Requests |
