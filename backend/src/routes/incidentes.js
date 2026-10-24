@@ -140,4 +140,49 @@ router.put('/:id/asignar', async (req, res) => {
   }
 });
 
+// Transiciones permitidas: de cada estado, a cuales se puede pasar
+const TRANSICIONES = {
+  NUEVO: ['ASIGNADO'],
+  ASIGNADO: ['EN_PROCESO'],
+  EN_PROCESO: ['RESUELTO'],
+  RESUELTO: ['CERRADO', 'EN_PROCESO'], // se puede reabrir si no quedo resuelto
+  CERRADO: [],
+};
+
+// PUT /incidentes/:id/estado -> cambia el estado validando la transicion
+router.put('/:id/estado', async (req, res) => {
+  const id = Number(req.params.id);
+  const { estado } = req.body || {};
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Id no valido' });
+  }
+  if (!Object.keys(TRANSICIONES).includes(estado)) {
+    return res.status(400).json({ error: 'Estado no valido' });
+  }
+
+  try {
+    const actual = await pool.query('SELECT estado FROM incidentes WHERE id = $1', [id]);
+    if (actual.rows.length === 0) {
+      return res.status(404).json({ error: 'Incidente no encontrado' });
+    }
+
+    const estadoActual = actual.rows[0].estado;
+    if (!TRANSICIONES[estadoActual].includes(estado)) {
+      return res.status(400).json({
+        error: `Transicion no permitida: de ${estadoActual} a ${estado}`,
+      });
+    }
+
+    const resultado = await pool.query(
+      'UPDATE incidentes SET estado = $1 WHERE id = $2 RETURNING *',
+      [estado, id]
+    );
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al cambiar el estado' });
+  }
+});
+
 module.exports = router;
