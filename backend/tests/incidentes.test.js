@@ -76,3 +76,31 @@ describe('PUT /incidentes/:id/asignar', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('PUT /incidentes/:id/estado', () => {
+  test('rechaza un estado no valido (400)', async () => {
+    const res = await request(app).put('/incidentes/1/estado').send({ estado: 'XYZ' });
+    expect(res.status).toBe(400);
+  });
+
+  test('responde 404 si el incidente no existe', async () => {
+    pool.query.mockResolvedValue({ rows: [] });
+    const res = await request(app).put('/incidentes/999/estado').send({ estado: 'ASIGNADO' });
+    expect(res.status).toBe(404);
+  });
+
+  test('rechaza una transicion no permitida (400)', async () => {
+    pool.query.mockResolvedValueOnce({ rows: [{ estado: 'NUEVO' }] });
+    const res = await request(app).put('/incidentes/1/estado').send({ estado: 'CERRADO' });
+    expect(res.status).toBe(400);
+  });
+
+  test('acepta una transicion valida (200)', async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ estado: 'ASIGNADO' }] })
+      .mockResolvedValueOnce({ rows: [{ id: 1, estado: 'EN_PROCESO' }] });
+    const res = await request(app).put('/incidentes/1/estado').send({ estado: 'EN_PROCESO' });
+    expect(res.status).toBe(200);
+    expect(res.body.estado).toBe('EN_PROCESO');
+  });
+});
