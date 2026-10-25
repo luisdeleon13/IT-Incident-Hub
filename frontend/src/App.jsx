@@ -4,6 +4,7 @@ import FormularioIncidente from './components/FormularioIncidente';
 import ListaIncidentes from './components/ListaIncidentes';
 import DetalleIncidente from './components/DetalleIncidente';
 import FiltrosIncidentes from './components/FiltrosIncidentes';
+import Graficas from './components/Graficas';
 
 const FILTROS_VACIOS = { estado: '', prioridad: '', categoria: '', tecnico_id: '' };
 import Indicadores from './components/Indicadores';
@@ -41,6 +42,7 @@ export default function App() {
     <div className="contenedor">
       <h1>IT Incident Hub</h1>
       <Indicadores actualizar={incidentes} />
+      <Graficas actualizar={incidentes} />
       <FormularioIncidente alCrear={cargar} />
 
       {seleccionado && (

@@ -79,3 +79,9 @@ export async function obtenerResumen() {
   if (!respuesta.ok) throw new Error('No se pudo cargar el resumen');
   return respuesta.json();
 }
+// Trae la distribucion por categoria y por tecnico
+export async function obtenerDistribucion() {
+  const respuesta = await fetch(`${API_URL}/dashboard/distribucion`);
+  if (!respuesta.ok) throw new Error('No se pudo cargar la distribucion');
+  return respuesta.json();
+}
