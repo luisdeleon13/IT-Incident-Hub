@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { obtenerTecnicos, asignarTecnico, cambiarEstado } from '../api';
+import {
+  obtenerTecnicos, asignarTecnico, cambiarEstado,
+  obtenerComentarios, crearComentario,
+} from '../api';
 
-// Estados a los que se puede pasar desde cada estado (igual que el backend)
 const SIGUIENTES = {
   NUEVO: [],
   ASIGNADO: ['EN_PROCESO'],
@@ -13,12 +15,23 @@ const SIGUIENTES = {
 export default function DetalleIncidente({ incidente, alCambiar, alCerrar }) {
   const [tecnicos, setTecnicos] = useState([]);
   const [seleccionado, setSeleccionado] = useState(incidente.tecnico_id || '');
+  const [comentarios, setComentarios] = useState([]);
+  const [texto, setTexto] = useState('');
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
 
+  async function cargarComentarios() {
+    try {
+      setComentarios(await obtenerComentarios(incidente.id));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     obtenerTecnicos().then(setTecnicos).catch((e) => setError(e.message));
-  }, []);
+    cargarComentarios();
+  }, [incidente.id]);
 
   async function asignar() {
     if (!seleccionado) {
@@ -37,12 +50,26 @@ export default function DetalleIncidente({ incidente, alCambiar, alCerrar }) {
     }
   }
 
-  // Pasa el incidente al estado indicado
   async function mover(nuevo) {
     setError('');
     try {
       await cambiarEstado(incidente.id, nuevo);
       alCambiar();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function comentar() {
+    if (!texto.trim()) {
+      setError('Escribe un comentario');
+      return;
+    }
+    setError('');
+    try {
+      await crearComentario(incidente.id, texto);
+      setTexto('');
+      await cargarComentarios();
     } catch (err) {
       setError(err.message);
     }
@@ -72,6 +99,25 @@ export default function DetalleIncidente({ incidente, alCambiar, alCerrar }) {
           </button>
         ))}
       </div>
+
+      <h3>Bitácora</h3>
+      <textarea
+        rows="2"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        placeholder="Escribe un comentario..."
+      />
+      <button onClick={comentar}>Comentar</button>
+      {comentarios.length === 0 && <p>Sin comentarios todavía.</p>}
+      <ul>
+        {comentarios.map((c) => (
+          <li key={c.id}>
+            <strong>{c.autor}</strong> · {new Date(c.fecha).toLocaleString()}
+            <br />
+            {c.texto}
+          </li>
+        ))}
+      </ul>
 
       {error && <p className="error">{error}</p>}
 
