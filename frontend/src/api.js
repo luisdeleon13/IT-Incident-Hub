@@ -73,3 +73,9 @@ export async function crearComentario(incidenteId, texto) {
   if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al comentar');
   return cuerpo;
 }
+// Trae los indicadores del dashboard
+export async function obtenerResumen() {
+  const respuesta = await fetch(`${API_URL}/dashboard/resumen`);
+  if (!respuesta.ok) throw new Error('No se pudo cargar el resumen');
+  return respuesta.json();
+}

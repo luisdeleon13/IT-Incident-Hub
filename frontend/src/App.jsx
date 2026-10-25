@@ -6,6 +6,7 @@ import DetalleIncidente from './components/DetalleIncidente';
 import FiltrosIncidentes from './components/FiltrosIncidentes';
 
 const FILTROS_VACIOS = { estado: '', prioridad: '', categoria: '', tecnico_id: '' };
+import Indicadores from './components/Indicadores';
 
 export default function App() {
   const [incidentes, setIncidentes] = useState([]);
@@ -39,6 +40,7 @@ export default function App() {
   return (
     <div className="contenedor">
       <h1>IT Incident Hub</h1>
+      <Indicadores actualizar={incidentes} />
       <FormularioIncidente alCrear={cargar} />
 
       {seleccionado && (
