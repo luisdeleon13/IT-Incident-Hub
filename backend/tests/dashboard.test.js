@@ -16,3 +16,15 @@ describe('GET /dashboard/resumen', () => {
         expect(res.body).toEqual({ abiertos: 3, cerrados: 2, criticos: 1 });
     });
 });
+
+describe('GET /dashboard/distribucion', () => {
+    test('devuelve la distribucion por categoria y por tecnico', async () => {
+        pool.query
+            .mockResolvedValueOnce({ rows: [{ nombre: 'RED', total: 2 }] })
+            .mockResolvedValueOnce({ rows: [{ nombre: 'Sin asignar', total: 2 }] });
+        const res = await request(app).get('/dashboard/distribucion');
+        expect(res.status).toBe(200);
+        expect(res.body.porCategoria).toEqual([{ nombre: 'RED', total: 2 }]);
+        expect(res.body.porTecnico).toEqual([{ nombre: 'Sin asignar', total: 2 }]);
+    });
+});
