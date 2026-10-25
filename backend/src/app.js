@@ -12,6 +12,9 @@ app.get('/salud', (req, res) => res.json({ estado: 'ok' }));
 
 const usuariosRoutes = require('./routes/usuarios');
 
+const comentariosRoutes = require('./routes/comentarios');
+
+app.use('/incidentes/:id/comentarios', comentariosRoutes);
 // Todas las rutas de incidentes cuelgan de /incidentes
 app.use('/incidentes', incidentesRoutes);
 
