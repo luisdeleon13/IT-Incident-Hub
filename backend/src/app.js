@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const incidentesRoutes = require('./routes/incidentes');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 
@@ -19,5 +20,7 @@ app.use('/incidentes/:id/comentarios', comentariosRoutes);
 app.use('/incidentes', incidentesRoutes);
 
 app.use('/usuarios', usuariosRoutes);
+
+app.use('/dashboard', dashboardRoutes);
 
 module.exports = app;
