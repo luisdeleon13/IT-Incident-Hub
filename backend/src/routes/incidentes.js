@@ -42,11 +42,39 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /incidentes -> devuelve la lista de incidentes (los mas recientes primero)
+// GET /incidentes -> lista con filtros opcionales: estado, prioridad, categoria, tecnico_id
 router.get('/', async (req, res) => {
+  const { estado, prioridad, categoria, tecnico_id } = req.query;
+  const ESTADOS = ['NUEVO', 'ASIGNADO', 'EN_PROCESO', 'RESUELTO', 'CERRADO'];
+
+  // Validar cada filtro que venga
+  if (estado && !ESTADOS.includes(estado)) {
+    return res.status(400).json({ error: 'Estado no valido' });
+  }
+  if (prioridad && !PRIORIDADES.includes(prioridad)) {
+    return res.status(400).json({ error: 'Prioridad no valida' });
+  }
+  if (categoria && !CATEGORIAS.includes(categoria)) {
+    return res.status(400).json({ error: 'Categoria no valida' });
+  }
+  let tecnicoNum = null;
+  if (tecnico_id) {
+    tecnicoNum = Number(tecnico_id);
+    if (!Number.isInteger(tecnicoNum) || tecnicoNum <= 0) {
+      return res.status(400).json({ error: 'Tecnico no valido' });
+    }
+  }
+
+  // Se arma el WHERE solo con los filtros presentes, usando parametros $1, $2...
+  const condiciones = [];
+  const valores = [];
+  if (estado) { valores.push(estado); condiciones.push(`i.estado = $${valores.length}`); }
+  if (prioridad) { valores.push(prioridad); condiciones.push(`i.prioridad = $${valores.length}`); }
+  if (categoria) { valores.push(categoria); condiciones.push(`i.categoria = $${valores.length}`); }
+  if (tecnicoNum) { valores.push(tecnicoNum); condiciones.push(`i.tecnico_id = $${valores.length}`); }
+  const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
   try {
-    // LEFT JOIN: trae tambien el nombre de quien reporta y del tecnico.
-    // Es LEFT para los incidentes que aun no tienen tecnico asignado.
     const resultado = await pool.query(
       `SELECT i.*,
               u.nombre AS usuario_nombre,
@@ -54,7 +82,9 @@ router.get('/', async (req, res) => {
        FROM incidentes i
        JOIN usuarios u ON u.id = i.usuario_id
        LEFT JOIN usuarios t ON t.id = i.tecnico_id
-       ORDER BY i.fecha_creacion DESC`
+       ${where}
+       ORDER BY i.fecha_creacion DESC`,
+      valores
     );
     res.json(resultado.rows);
   } catch (error) {
