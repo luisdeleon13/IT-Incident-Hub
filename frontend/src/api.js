@@ -50,3 +50,21 @@ export async function cambiarEstado(id, estado) {
   if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al cambiar el estado');
   return cuerpo;
 }
+
+// Trae los comentarios de un incidente
+export async function obtenerComentarios(incidenteId) {
+  const respuesta = await fetch(`${API_URL}/incidentes/${incidenteId}/comentarios`);
+  if (!respuesta.ok) throw new Error('No se pudo cargar el historial');
+  return respuesta.json();
+}
+// Agrega un comentario. usuario_id fijo (ver deuda tecnica DT-1)
+export async function crearComentario(incidenteId, texto) {
+  const respuesta = await fetch(`${API_URL}/incidentes/${incidenteId}/comentarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ texto, usuario_id: 2 }),
+  });
+  const cuerpo = await respuesta.json();
+  if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al comentar');
+  return cuerpo;
+}
