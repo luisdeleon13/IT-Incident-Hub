@@ -39,3 +39,14 @@ export async function asignarTecnico(incidenteId, tecnicoId) {
   if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al asignar');
   return cuerpo;
 }
+// Cambia el estado de un incidente
+export async function cambiarEstado(id, estado) {
+  const respuesta = await fetch(`${API_URL}/incidentes/${id}/estado`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado }),
+  });
+  const cuerpo = await respuesta.json();
+  if (!respuesta.ok) throw new Error(cuerpo.error || 'Error al cambiar el estado');
+  return cuerpo;
+}
