@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react';
-import { obtenerTecnicos, asignarTecnico } from '../api';
+import { obtenerTecnicos, asignarTecnico, cambiarEstado } from '../api';
 
-// Panel que muestra un incidente y permite asignarle un tecnico
+// Estados a los que se puede pasar desde cada estado (igual que el backend)
+const SIGUIENTES = {
+  NUEVO: [],
+  ASIGNADO: ['EN_PROCESO'],
+  EN_PROCESO: ['RESUELTO'],
+  RESUELTO: ['CERRADO', 'EN_PROCESO'],
+  CERRADO: [],
+};
+
 export default function DetalleIncidente({ incidente, alCambiar, alCerrar }) {
   const [tecnicos, setTecnicos] = useState([]);
   const [seleccionado, setSeleccionado] = useState(incidente.tecnico_id || '');
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
 
-  // Carga la lista de tecnicos al abrir el panel
   useEffect(() => {
     obtenerTecnicos().then(setTecnicos).catch((e) => setError(e.message));
   }, []);
@@ -22,11 +29,22 @@ export default function DetalleIncidente({ incidente, alCambiar, alCerrar }) {
     setGuardando(true);
     try {
       await asignarTecnico(incidente.id, seleccionado);
-      alCambiar(); // Recarga la lista en la pantalla principal
+      alCambiar();
     } catch (err) {
       setError(err.message);
     } finally {
       setGuardando(false);
+    }
+  }
+
+  // Pasa el incidente al estado indicado
+  async function mover(nuevo) {
+    setError('');
+    try {
+      await cambiarEstado(incidente.id, nuevo);
+      alCambiar();
+    } catch (err) {
+      setError(err.message);
     }
   }
 
@@ -46,6 +64,14 @@ export default function DetalleIncidente({ incidente, alCambiar, alCerrar }) {
           <option key={t.id} value={t.id}>{t.nombre}</option>
         ))}
       </select>
+
+      <div style={{ marginTop: 12 }}>
+        {SIGUIENTES[incidente.estado].map((e) => (
+          <button key={e} onClick={() => mover(e)} style={{ marginRight: 8 }}>
+            Pasar a {e}
+          </button>
+        ))}
+      </div>
 
       {error && <p className="error">{error}</p>}
 
