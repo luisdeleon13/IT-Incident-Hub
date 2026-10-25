@@ -1,9 +1,14 @@
 // La URL sale de la variable de entorno de Vite; si no existe, usa localhost
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// Trae la lista de incidentes
-export async function obtenerIncidentes() {
-  const respuesta = await fetch(`${API_URL}/incidentes`);
+// Trae la lista de incidentes, con filtros opcionales
+export async function obtenerIncidentes(filtros = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([clave, valor]) => {
+    if (valor) params.append(clave, valor);
+  });
+  const query = params.toString();
+  const respuesta = await fetch(`${API_URL}/incidentes${query ? `?${query}` : ''}`);
   if (!respuesta.ok) throw new Error('No se pudo cargar la lista');
   return respuesta.json();
 }
