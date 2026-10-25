@@ -29,3 +29,5 @@ El pipeline ejecuta `npm audit --omit=dev --audit-level=high` sobre el backend. 
 ## Seguimiento
 
 Revisar cuando haya versiones nuevas de nodemon y Jest que resuelvan los avisos, y repetir la auditoría antes del release v1.0.0.
+
+| body-parser | Alta | express → body-parser | Sí | Corregida (AB#48) con npm audit fix |
