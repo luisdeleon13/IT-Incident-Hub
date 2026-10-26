@@ -1,4 +1,4 @@
-# Pipeline de integracion continua - IT Incident Hub
+# Pipeline IT Incident Hub: Build -> Dev -> QA -> Produccion
 trigger:
   branches:
     include:
@@ -6,68 +6,129 @@ trigger:
       - feature/*
       - fix/*
       - docs/*
+      - refactor/*
 
-pool:
-  name: Default
 variables:
   - group: incident-hub-secretos
-steps:
-  # 1. Checkout del codigo
-  - checkout: self
 
-  
-  - script: npm ci
-    workingDirectory: backend
-    displayName: 'Instalar dependencias del backend'
+stages:
+  - stage: Build
+    displayName: 'Build, pruebas y empaquetado'
+    pool:
+      name: Default
+    jobs:
+      - job: build
+        steps:
+          - checkout: self
 
-    # Revision de dependencias de produccion (falla con severidad alta o critica)
-  - script: npm audit --omit=dev --audit-level=high
-    workingDirectory: backend
-    displayName: 'Auditoria de dependencias del backend (produccion)'
+          - script: npm ci
+            workingDirectory: backend
+            displayName: 'Instalar dependencias del backend'
 
-    # Pruebas automaticas del backend (Jest)
-  - script: npm test
-    workingDirectory: backend
-    displayName: 'Pruebas del backend (Jest)'
+          # Falla con severidad alta o critica en dependencias de produccion
+          - script: npm audit --omit=dev --audit-level=high
+            workingDirectory: backend
+            displayName: 'Auditoria de dependencias del backend (produccion)'
 
-  # 3. Instalar dependencias del frontend
-  - script: npm ci
-    workingDirectory: frontend
-    displayName: 'Instalar dependencias del frontend'
+          - script: npm test
+            workingDirectory: backend
+            displayName: 'Pruebas del backend (Jest)'
 
-  # 4. Build del frontend
-  - script: npm run build
-    workingDirectory: frontend
-    displayName: 'Build del frontend'
+          - script: npm ci
+            workingDirectory: frontend
+            displayName: 'Instalar dependencias del frontend'
 
-  # Demostracion de uso de un secreto protegido (Azure oculta su valor en los logs)
-  - powershell: |
-      if ($env:DB_PASSWORD) { Write-Host "DB_PASSWORD disponible (longitud: $($env:DB_PASSWORD.Length))" }
-      else { Write-Host "DB_PASSWORD no disponible"; exit 1 }
-    displayName: 'Verificar secreto protegido'
-    env:
-      DB_PASSWORD: $(DB_PASSWORD)
-  # Preparar la carpeta del paquete: backend (sin node_modules ni .env) y frontend compilado
-  - powershell: |
-      New-Item -ItemType Directory -Force -Path "$(Build.ArtifactStagingDirectory)\paquete" | Out-Null
-      robocopy backend "$(Build.ArtifactStagingDirectory)\paquete\backend" /E /XD node_modules /XF .env | Out-Null
-      robocopy frontend\dist "$(Build.ArtifactStagingDirectory)\paquete\frontend" /E | Out-Null
-      robocopy database "$(Build.ArtifactStagingDirectory)\paquete\database" /E | Out-Null
-      if ($LASTEXITCODE -ge 8) { exit 1 } else { exit 0 }
-    displayName: 'Preparar paquete'
+          - script: npm run build
+            workingDirectory: frontend
+            displayName: 'Build del frontend'
 
-  # Comprimir el paquete en un .zip
-  - task: ArchiveFiles@2
-    displayName: 'Comprimir paquete'
-    inputs:
-      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\paquete'
-      includeRootFolder: false
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)\incident-hub-$(Build.BuildNumber).zip'
+          # El secreto se mapea explicitamente; solo se imprime su longitud
+          - powershell: |
+              if ($env:DB_PASSWORD) { Write-Host "DB_PASSWORD disponible (longitud: $($env:DB_PASSWORD.Length))" }
+              else { Write-Host "DB_PASSWORD no disponible"; exit 1 }
+            displayName: 'Verificar secreto protegido'
+            env:
+              DB_PASSWORD: $(DB_PASSWORD)
 
-  # Publicar el .zip como artefacto
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publicar artefacto'
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)\incident-hub-$(Build.BuildNumber).zip'
-      ArtifactName: 'incident-hub'
+          # Paquete: backend (sin node_modules ni .env), frontend compilado y scripts SQL
+          - powershell: |
+              New-Item -ItemType Directory -Force -Path "$(Build.ArtifactStagingDirectory)\paquete" | Out-Null
+              $destinos = @(
+                @{ origen = "backend";       destino = "backend"  },
+                @{ origen = "frontend\dist"; destino = "frontend" },
+                @{ origen = "database";      destino = "database" }
+              )
+              foreach ($d in $destinos) {
+                $dest = "$(Build.ArtifactStagingDirectory)\paquete\$($d.destino)"
+                if ($d.origen -eq "backend") {
+                  robocopy $d.origen $dest /E /XD node_modules /XF .env .env.local | Out-Null
+                } else {
+                  robocopy $d.origen $dest /E | Out-Null
+                }
+                # robocopy usa codigos 0-7 para exito; 8 o mas es error
+                if ($LASTEXITCODE -ge 8) { Write-Host "Fallo al copiar $($d.origen)"; exit 1 }
+              }
+              exit 0
+            displayName: 'Preparar paquete'
+
+          - task: ArchiveFiles@2
+            displayName: 'Comprimir paquete'
+            inputs:
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\paquete'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)\incident-hub-$(Build.BuildNumber).zip'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publicar artefacto'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)\incident-hub-$(Build.BuildNumber).zip'
+              ArtifactName: 'incident-hub'
+
+  - stage: Dev
+    displayName: 'Despliegue en Dev'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    pool:
+      name: Default
+    jobs:
+      - deployment: desplegar_dev
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: dir "$(Pipeline.Workspace)\incident-hub"
+                  displayName: 'Artefacto recibido en Dev'
+
+  - stage: QA
+    displayName: 'Validacion en QA'
+    dependsOn: Dev
+    condition: succeeded()
+    pool:
+      name: Default
+    jobs:
+      - deployment: validar_qa
+        environment: qa
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo Validacion en QA del artefacto incident-hub
+                  displayName: 'Validar en QA'
+
+  - stage: Produccion
+    displayName: 'Liberacion a Produccion'
+    dependsOn: QA
+    condition: succeeded()
+    pool:
+      name: Default
+    jobs:
+      - deployment: liberar_produccion
+        environment: produccion
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - script: echo Liberando incident-hub a Produccion
+                  displayName: 'Liberar a Produccion'
