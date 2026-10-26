@@ -25,7 +25,7 @@ Cada cambio sale de `main` actualizada y se nombra según su tipo:
 2. Se crea la rama desde `main`.
 3. Se hacen commits cuyo mensaje incluye `AB#ID` de la Task.
 4. Se sube la rama y se abre un Pull Request hacia `main`, con descripción, Work Item vinculado y evidencia de validación.
-5. El pipeline de Azure corre automáticamente sobre las ramas `feature/*`, `fix/*`, `docs/*` y `main`.
+5. El pipeline de Azure corre automáticamente sobre las ramas `feature/*`, `fix/*`, `docs/* refactor/*` y `main`.
 6. El revisor lee los cambios, comenta y aprueba.
 7. Se completa el PR con **Merge (no fast forward)** para conservar todos los commits y su trazabilidad.
 8. La Task se cierra con un comentario que indica rama y PR.

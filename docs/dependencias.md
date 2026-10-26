@@ -15,12 +15,13 @@ Auditoría ejecutada con `npm audit` el 22/10/2026 (Task 41).
 |---------|-----------|--------|----------------------|----------|
 | braces | Alta | nodemon → chokidar → braces | No (solo desarrollo) | Aceptada temporalmente |
 | sprintf-js | Moderada | jest → ... → js-yaml → argparse → sprintf-js | No (solo pruebas) | Aceptada temporalmente |
+| body-parser | Alta | express → body-parser | Sí | Corregida (AB#48) con npm audit fix |
 
 ## Justificación
 
 - Ambos paquetes son devDependencies: no se empaquetan ni se ejecutan en producción.
 - La corrección sugerida (`npm audit fix --force`) instalaría nodemon 1.14.10 y jest 25.0.0, versiones antiguas con cambios incompatibles que podrían romper las 9 pruebas. Se descartó.
-- Dependencias de producción (express, pg, dotenv, cors): sin hallazgos.
+- Dependencias de producción: sin hallazgos vigentes tras la corrección de body-parser.
 
 ## Control en el pipeline
 
@@ -31,3 +32,5 @@ El pipeline ejecuta `npm audit --omit=dev --audit-level=high` sobre el backend. 
 Revisar cuando haya versiones nuevas de nodemon y Jest que resuelvan los avisos, y repetir la auditoría antes del release v1.0.0.
 
 | body-parser | Alta | express → body-parser | Sí | Corregida (AB#48) con npm audit fix |
+
+- El 24/10/2026 el pipeline detectó una vulnerabilidad alta en body-parser (dependencia de Express, de producción), publicada después de la auditoría inicial. Se corrigió con `npm audit fix` (AB#48), sin cambios incompatibles.

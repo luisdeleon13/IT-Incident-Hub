@@ -73,3 +73,7 @@ Por indicación del docente, el proyecto se entrega en un único repositorio, co
 |---|---|
 | Luis Reynaldo de León Sopón | Desarrollo y DevOps |
 | Jaqueline Fabiola Rodas Ramirez | Revisión de Pull Requests |
+
+## Ambientes y release
+
+Para consultar la estrategia de despliegue y flujo de aprobación por ambientes (Dev, QA y Producción), revisa el documento [Estrategia de Release](docs/estrategia-release.md).
